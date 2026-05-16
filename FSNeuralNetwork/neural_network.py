@@ -159,7 +159,6 @@ class NeuralNetwork:
         return total_loss
 
     def __str__(self) -> str:
-        """Lesbare Übersicht über die Architektur des Netzwerks."""
         structure = f"NeuralNetwork Architektur:\n"
         structure += f"  [Eingang]  {self.inputLayer}\n"
         for i, layer in enumerate(self.hiddenLayers):
@@ -168,7 +167,6 @@ class NeuralNetwork:
         return structure
 
     def __repr__(self) -> str:
-        """Eindeutige String-Repräsentation des Objekts."""
         return (
             f"NeuralNetwork(inputs={self.inputLayer.inputs_count}, "
             f"hidden_layers_count={len(self.hiddenLayers)}, "
