@@ -53,15 +53,15 @@ class NeuralNetwork:
     def calculate_data(self, data: list[float]) -> list[float]:
         self.inputLayer.set_inputs(data)
         layer_out = self.inputLayer.forward()
-        print(f"Output Input Layer: {layer_out}")
+        # print(f"Output Input Layer: {layer_out}")
 
         for hiddenLayer in self.hiddenLayers:
             hidden_layer_out = hiddenLayer.forward(layer_out)
-            print(f"Output Hidden Layer: {hidden_layer_out}")
+            # print(f"Output Hidden Layer: {hidden_layer_out}")
             layer_out = hidden_layer_out
 
         result = self.outputLayer.forward(layer_out)
-        print(f"Result after Output Layer: {result}")
+        # print(f"Result after Output Layer: {result}")
         return result
 
     def get_weights_and_biases(self) -> dict:
@@ -107,7 +107,6 @@ class NeuralNetwork:
                 outputs=out_cfg["neurons"],
                 output_bias=-0.5,
                 output_activation_type=activationType(out_cfg["activation"]),
-                output_weights=out_cfg["weights"],
                 output_alpha=out_cfg.get("alpha", 1),
             )
 
@@ -122,6 +121,12 @@ class NeuralNetwork:
                     alpha=hidden_layer_cfg.get("alpha", 1),
                 )
                 network.hiddenLayers[-1].set_biases(hidden_layer_cfg["biases"])
+
+            network.outputLayer.set_weights(
+                out_cfg["weights"],
+            )
+
+            print(f"loaded_nn: {network}")
 
             return network
         except Exception as e:
@@ -155,6 +160,8 @@ class NeuralNetwork:
 
         for hiddenLayer in reversed(self.hiddenLayers):
             current_errors = hiddenLayer.backward(current_errors, learning_rate)
+
+        # print(self.get_weights_and_biases())
 
         return total_loss
 

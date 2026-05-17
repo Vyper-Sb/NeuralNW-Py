@@ -206,6 +206,6 @@ class NeuralLayer:
             "inputs": self.inputs_count,
             "biases": self.biases,
             "activation": self.activation.value,
-            "weights": self.weights,
+            "weights": [neuron.weights for neuron in self.Neurons],
             "alpha": self.alpha,
         }
