@@ -137,7 +137,7 @@ class NeuralNetwork:
         training_input: list[float],
         target_output: list[float],
         learning_rate: float,
-    ) -> float:
+    ) -> tuple[float, list[float]]:
         # 1.Forward Pass
         predicted_output = self.calculate_data(training_input)
 
@@ -163,7 +163,7 @@ class NeuralNetwork:
 
         # print(self.get_weights_and_biases())
 
-        return total_loss
+        return total_loss, predicted_output
 
     def __str__(self) -> str:
         structure = f"NeuralNetwork Architektur:\n"
