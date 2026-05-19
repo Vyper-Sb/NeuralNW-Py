@@ -30,7 +30,7 @@ weights_out = generate_random_weights(10, 128)
 net = NeuralNetwork(
     inputs=784, 
     outputs=10, 
-    output_activation_type=activationType.SOFTMAX # Deine Softmax-Einstellung
+    output_activation_type=activationType.SOFTMAX 
 )
 net.add_hidden_layer(neurons=128, activation_type=activationType.RELU, weights=weights_h1)
 net.outputLayer.set_weights
@@ -70,7 +70,7 @@ for epoch in range(EPOCHS):
                 
             train_samples += 1
             
-    # Testdaten auswerten)
+    # Testdaten auswerten
     test_correct = 0
     test_samples = 0
     
