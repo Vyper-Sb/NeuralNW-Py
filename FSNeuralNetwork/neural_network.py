@@ -134,29 +134,32 @@ class NeuralNetwork:
 
     def train_with_sgd(
         self,
-        training_input: list[float],
-        target_output: list[float],
+        batch: list[list[float]],
+        batch_target_output: list[list[float]],
         learning_rate: float,
-    ) -> tuple[float, list[float]]:
+    ) -> tuple[float, list[list[float]]]:
         # 1.Forward Pass
-        predicted_output = self.calculate_data(training_input)
+        total_loss: list[float] = [0]*self.outputLayer.neurons_count
 
-        # 2.Output Error
-        output_errors = []
-        total_loss: float = 0
-        for i in range(len(predicted_output)):
-            # Formel: Vorhersage - Wahrheit
-            error = predicted_output[i] - target_output[i]
-            output_errors.append(error)
+        for i, training_input in enumerate(batch):
+            predicted_output = self.calculate_data(training_input)
+            target_output = batch_target_output[i]
 
-            # Mathematical MSE-Loss only as information
-            total_loss += 0.5 * (error**2)
+            
+            for j in range(len(predicted_output)):
+                # Formel: Vorhersage - Wahrheit
+                error = predicted_output[j] - target_output[j]
 
-        total_loss /= len(predicted_output)
+                total_loss[j] += 0.5 * (error**2)
+
+
+        for i, loss in enumerate (total_loss):
+            loss /= len(batch)
+            total_loss[i] = loss
 
         # 3.Backward Pass
 
-        current_errors = self.outputLayer.backward(output_errors, learning_rate)
+        current_errors = self.outputLayer.backward(total_loss, learning_rate)
 
         for hiddenLayer in reversed(self.hiddenLayers):
             current_errors = hiddenLayer.backward(current_errors, learning_rate)

@@ -35,7 +35,8 @@ net = NeuralNetwork(
 net.add_hidden_layer(neurons=128, activation_type=activationType.RELU, weights=weights_h1)
 net.outputLayer.set_weights
 
-EPOCHS = 1
+
+EPOCHS = 6
 LEARNING_RATE = 0.01 
 
 print("Starte Training ...")
@@ -52,23 +53,27 @@ for epoch in range(EPOCHS):
         np_images = images_batch.numpy().reshape(-1, 784)
         np_labels = labels_batch.numpy()
         curr_val += 1
+
+        one_hot_labels = np.eye(10)[np_labels]
+            
+        net.train_with_sgd(np_images.tolist(), one_hot_labels.tolist(), 0.01)
         
-        for idx in range(len(np_images)):
-            input_data = np_images[idx].tolist()
-            #print(input_data)
-            target_label = int(np_labels[idx])
+        # for idx in range(len(np_images)):
+        #     input_data = np_images[idx].tolist()
+        #     #print(input_data)
+        #     target_label = int(np_labels[idx])
             
-            target_vector = [0.0] * 10
-            target_vector[target_label] = 1.0
+        #     target_vector = [0.0] * 10
+        #     target_vector[target_label] = 1.0
             
-            _, predicted_output = net.train_with_sgd(input_data, target_vector, LEARNING_RATE)
+        #     _, predicted_output = net.train_with_sgd(input_data, target_vector, LEARNING_RATE)
             
 
-            predicted_label = predicted_output.index(max(predicted_output))
-            if predicted_label == target_label:
-                train_correct += 1
+        #     predicted_label = predicted_output.index(max(predicted_output))
+        #     if predicted_label == target_label:
+        #         train_correct += 1
                 
-            train_samples += 1
+        #     train_samples += 1
             
     # Testdaten auswerten
     test_correct = 0
@@ -90,11 +95,10 @@ for epoch in range(EPOCHS):
             test_samples += 1
             
     # Metriken für die Epoche berechnen
-    epoch_accuracy = train_correct / train_samples
     val_accuracy = test_correct / test_samples
     
     print(f"Epoch {epoch+1}/{EPOCHS}")
-    print(f"sparse_categorical_accuracy: {epoch_accuracy:.4f} - val_sparse_categorical_accuracy: {val_accuracy:.4f}")
+    print(f"test - accuracy: {val_accuracy:.4f}")
 
 print("Training beendet!")
-net.save_neural_network("mein_softmax_mnist_modell.json")
+net.save_neural_network("modell6Epochs.json")

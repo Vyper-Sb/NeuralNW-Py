@@ -55,9 +55,9 @@ class Neuron:
         delta = err_right * derivative_activationFunc(self.last_total_value, self.alpha)
 
         for i in range(len(self.weights)):
-            self.weights[i] -= learning_rate * delta * self.last_input[i]
+            self.weights[i] += learning_rate * delta * self.last_output
 
-        self.bias -= learning_rate * delta
+        self.bias += learning_rate * delta
 
         return delta
 
