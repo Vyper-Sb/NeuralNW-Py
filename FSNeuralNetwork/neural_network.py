@@ -68,9 +68,9 @@ class NeuralNetwork:
         hidden_layers_wb = []
 
         for hiddenLayer in self.hiddenLayers:
-            hidden_layers_wb.append(hiddenLayer.return_weights_and_biases)
+            hidden_layers_wb.append(hiddenLayer.return_weights_and_biases())
 
-        output_layer_wb = self.outputLayer.return_weights_and_biases
+        output_layer_wb = self.outputLayer.return_weights_and_biases()
 
         return {
             "hidden_layers_wb": hidden_layers_wb,
@@ -141,9 +141,12 @@ class NeuralNetwork:
         # 1.Forward Pass
         total_loss = 0.0
         all_predicted_outputs: list[list[float]] = []
+        if len(batch) != len(batch_target_output):
+            raise ValueError("Batch und Target-Batch müssen gleich lang sein.")
 
         for training_input, target_output in zip(batch, batch_target_output):
             predicted_output = self.calculate_data(training_input)
+            print("ouput:", predicted_output)
             all_predicted_outputs.append(predicted_output)
 
             output_errors: list[float] = []
@@ -152,11 +155,16 @@ class NeuralNetwork:
                 error = predicted_output[j] - target_output[j]
                 total_loss += 0.5 * error**2
                 output_errors.append(error)
+            
+            print("ouput_errors:", output_errors)
 
             current_errors = self.outputLayer.backward(output_errors, learning_rate)
 
+            print("current errors:", current_errors)
+            
             for hiddenLayer in reversed(self.hiddenLayers):
                 current_errors = hiddenLayer.backward(current_errors, learning_rate)
+                print("current errors:", current_errors)
 
         average_loss = total_loss / len(batch)
 
