@@ -4,9 +4,9 @@ from FSNeuralNetwork.activation_functions import activationType
 
 network = NeuralNetwork.load_neural_network("test.json")
 
-for i in range(100):
+for i in range(1):
     network.train_with_sgd([[1]], [[2]], 0.5)
 
-network.save_neural_network("test_after_train-100.json")
+network.save_neural_network("weights_test.json")
 
 print(network.calculate_data([1]))

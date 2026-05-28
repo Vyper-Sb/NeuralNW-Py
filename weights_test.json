@@ -1,0 +1,35 @@
+{
+    "input_layer": {
+        "inputs": 1
+    },
+    "hidden_layers": [
+        {
+            "neurons": 1,
+            "inputs": 1,
+            "biases": [
+                -0.16046111337092173
+            ],
+            "activation": "ReLU",
+            "weights": [
+                [
+                    0.4395388866290783
+                ]
+            ],
+            "alpha": 1
+        }
+    ],
+    "output_layer": {
+        "neurons": 1,
+        "inputs": 1,
+        "biases": [
+            -0.23564101461943532
+        ],
+        "activation": "Sigmoid",
+        "weights": [
+            [
+                0.44574359415222586
+            ]
+        ],
+        "alpha": 1
+    }
+}

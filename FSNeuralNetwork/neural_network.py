@@ -139,34 +139,28 @@ class NeuralNetwork:
         learning_rate: float,
     ) -> tuple[float, list[list[float]]]:
         # 1.Forward Pass
-        total_loss: list[float] = [0]*self.outputLayer.neurons_count
+        total_loss = 0.0
+        all_predicted_outputs: list[list[float]] = []
 
-        for i, training_input in enumerate(batch):
+        for training_input, target_output in zip(batch, batch_target_output):
             predicted_output = self.calculate_data(training_input)
-            target_output = batch_target_output[i]
+            all_predicted_outputs.append(predicted_output)
 
-            
+            output_errors: list[float] = []
+
             for j in range(len(predicted_output)):
-                # Formel: Vorhersage - Wahrheit
                 error = predicted_output[j] - target_output[j]
+                total_loss += 0.5 * error**2
+                output_errors.append(error)
 
-                total_loss[j] += 0.5 * (error**2)
+            current_errors = self.outputLayer.backward(output_errors, learning_rate)
 
+            for hiddenLayer in reversed(self.hiddenLayers):
+                current_errors = hiddenLayer.backward(current_errors, learning_rate)
 
-        for i, loss in enumerate (total_loss):
-            loss /= len(batch)
-            total_loss[i] = loss
+        average_loss = total_loss / len(batch)
 
-        # 3.Backward Pass
-
-        current_errors = self.outputLayer.backward(total_loss, learning_rate)
-
-        for hiddenLayer in reversed(self.hiddenLayers):
-            current_errors = hiddenLayer.backward(current_errors, learning_rate)
-
-        # print(self.get_weights_and_biases())
-
-        return total_loss, predicted_output
+        return average_loss, all_predicted_outputs
 
     def __str__(self) -> str:
         structure = f"NeuralNetwork Architektur:\n"

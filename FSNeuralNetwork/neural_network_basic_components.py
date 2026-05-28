@@ -55,9 +55,9 @@ class Neuron:
         delta = err_right * derivative_activationFunc(self.last_total_value, self.alpha)
 
         for i in range(len(self.weights)):
-            self.weights[i] += learning_rate * delta * self.last_output
+            self.weights[i] -= learning_rate * delta * self.last_input[i]
 
-        self.bias += learning_rate * delta
+        self.bias -= learning_rate * delta
 
         return delta
 
@@ -173,7 +173,7 @@ class NeuralLayer:
 
     def backward(self, errs_right: list[float], learning_rate: float) -> list[float]:
         derivative_activationFunc = self.activation.get_activationFunc_derivative()
-
+        old_weights = [neuron.weights.copy() for neuron in self.Neurons]
         deltas: list[float] = []
         for i, neuron in enumerate(self.Neurons):
             delta = neuron.backward(
@@ -187,14 +187,14 @@ class NeuralLayer:
 
         for j in range(self.inputs_count):
             error_sum = 0.0
-            for k, neuron in enumerate(self.Neurons):
+            for k  in range (self.neurons_count):
 
-                error_sum += deltas[k] * neuron.weights[j]
+                error_sum += deltas[k] * old_weights[k][j]
 
             errors_for_left[j] = error_sum
 
         self.weights = [neuron.weights for neuron in self.Neurons]
-
+      
         return errors_for_left
 
     def return_weights_and_biases(self) -> dict[str, list]:
