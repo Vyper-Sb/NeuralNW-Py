@@ -1,4 +1,4 @@
-import tensorflow as tf
+import tensorflow as tf  # type: ignore
 import tensorflow_datasets as tfds
 
 # 1. Daten laden
@@ -8,7 +8,7 @@ import tensorflow_datasets as tfds
     shuffle_files=True,
     as_supervised=True,
     with_info=True,
-)
+)  # type: ignore
 
 
 # 2. Normalisierungs-Funktion

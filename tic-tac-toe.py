@@ -53,12 +53,15 @@ def train():
         with open("tictactoe_training_data.json", "r", encoding="utf-8") as f:
             data = json.load(f)
 
-            train_NEpochs_alternately(neuralNetwork=neuralNetwork, data=data, epochs=150)
+            train_NEpochs_alternately(
+                neuralNetwork=neuralNetwork, data=data, epochs=150
+            )
 
             neuralNetwork.save_neural_network("tictactoetrained24x12.json")
     except FileNotFoundError:
         raise FileNotFoundError("Json datei wurde nicht gefunden")
-    
+
+
 def print_board(board):
     """Gibt das Spielfeld formatiert im Terminal aus."""
     symbols = {0: " ", 1: "X", -1: "O"}  # 1 = KI (X), -1 = Mensch (O)
@@ -103,7 +106,7 @@ def format_for_ai(board):
     return list(board)
 
 
-def ai_move(board, ai_model: NeuralNetwork):
+def ai_move(board, ai_model: NeuralNetwork) -> int:
     """Berechnet den KI-Zug basierend auf den Ausgaben Ihres Netzwerks."""
     if ai_model is None:
         # Fallback, falls Ihr Modell noch nicht eingefügt wurde
@@ -126,8 +129,10 @@ def ai_move(board, ai_model: NeuralNetwork):
     print(sorted_indices)
     sorted_indices_with_k = []
     for i in range(len(sorted_indices)):
-        sorted_indices_with_k.append([sorted_indices[i], output_probabilities[sorted_indices[i]]])
-    
+        sorted_indices_with_k.append(
+            [sorted_indices[i], output_probabilities[sorted_indices[i]]]
+        )
+
     print(sorted_indices_with_k)
 
     valid_sorted_indices_with_k = []
@@ -135,24 +140,22 @@ def ai_move(board, ai_model: NeuralNetwork):
     for index, k in sorted_indices_with_k:
         if board[index] == 0:  # Gültig, da das Feld frei ist
             valid_sorted_indices_with_k.append([index, k])
-    
+
     print(valid_sorted_indices_with_k)
 
-    if not(valid_sorted_indices_with_k):
+    if not (valid_sorted_indices_with_k):
         return -1
 
     best_idx, best_k = valid_sorted_indices_with_k[0]
     second_idx, second_k = valid_sorted_indices_with_k[1]
 
-    diff = best_k-second_k
+    diff = best_k - second_k
     if diff > 0.4:
         print("KI ist sich zeimlich sicher")
         return best_idx
     else:
         print("KI ist sich unsicher")
-        return random.choices([best_idx, second_idx], weights=[best_k, second_k])
-        
-    
+        return random.choices([best_idx, second_idx], weights=[best_k, second_k])[0]
 
 
 def play_game(ai_model):
