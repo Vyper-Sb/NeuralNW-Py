@@ -1,4 +1,5 @@
 from FSNeuralNetwork.neural_network_basic_components import NeuralLayer
+from FSNeuralNetwork.loss_functions import LossType
 
 
 class InputNeuralLayer:
@@ -48,6 +49,62 @@ class HiddenNeuralLayer(NeuralLayer):
 class OutputNeuralLayer(NeuralLayer):
     def __init__(self, neurons: int, inputs: int, **kwargs) -> None:
         super().__init__(neurons=neurons, inputs=inputs, **kwargs)
+    
+
+    def backward(self, errs_right: list[float], learning_rate: float, loss_type:LossType) -> list[float]:
+
+        old_weights = [neuron.weights.copy() for neuron in self.Neurons]
+        deltas: list[float] = []
+
+        use_direct_delta = loss_type in [
+            LossType.BINARY_CROSS_ENTROPY,
+            LossType.CATEGORICAL_CROSS_ENTROPY,
+            LossType.SPARSE_CATEGORICAL_CROSS_ENTROPY,
+        ]
+
+        if not(use_direct_delta):
+            derivative_activationFunc = self.activation.get_activationFunc_derivative()
+
+            for i, neuron in enumerate(self.Neurons):
+                delta = neuron.backward(
+                    err_right=errs_right[i],
+                    learning_rate=learning_rate,
+                    derivative_activationFunc=derivative_activationFunc,
+                )
+                deltas.append(delta)
+        
+        else: 
+            for i, neuron in enumerate(self.Neurons):
+                delta = errs_right[i]
+
+                if neuron.last_input is None:
+                    raise ValueError("Forward pass must run before backward pass.")
+
+                for j in range(len(neuron.weights)):
+                    neuron.weights[j] -= learning_rate * delta * neuron.last_input[j]
+
+                neuron.bias -= learning_rate * delta
+
+
+                deltas.append(delta)
+
+
+        errors_for_left = [0.0] * self.inputs_count
+        #print("old_weights:", old_weights)
+
+        for j in range(self.inputs_count):
+            error_sum = 0.0
+            for k  in range (self.neurons_count):
+
+                error_sum += deltas[k] * old_weights[k][j]
+
+            errors_for_left[j] = error_sum
+
+        self.weights = [neuron.weights for neuron in self.Neurons]
+        #print("new weights:", self.weights)
+      
+        return errors_for_left
+
 
     def __str__(self) -> str:
         neuron_strings = "\n  ".join(

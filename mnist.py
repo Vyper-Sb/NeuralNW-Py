@@ -5,6 +5,7 @@ import math
 from FSNeuralNetwork.neural_network import *
 from FSNeuralNetwork.activation_functions import activationType
 from FSNeuralNetwork.startweight_utils import generate_random_weights
+from FSNeuralNetwork.loss_functions import LossType
 
 (ds_train, ds_test), ds_info = tfds.load(
     "mnist", split=["train", "test"], shuffle_files=True, as_supervised=True, with_info=True
@@ -29,14 +30,17 @@ weights_out = generate_random_weights(10, 128)
 
 net = NeuralNetwork(
     inputs=784, 
-    outputs=10, 
-    output_activation_type=activationType.SOFTMAX 
+    outputs=10,
+    output_bias=0, 
+    output_activation_type=activationType.SOFTMAX,
+    loss_type = LossType.CATEGORICAL_CROSS_ENTROPY
 )
-net.add_hidden_layer(neurons=128, activation_type=activationType.RELU, weights=weights_h1)
-net.outputLayer.set_weights
+
+net.add_hidden_layer(neurons=128, bias=0,activation_type=activationType.RELU, weights=weights_h1)
+net.outputLayer.set_weights(weights=weights_out)
 
 
-EPOCHS = 6
+EPOCHS = 1
 LEARNING_RATE = 0.01 
 
 print("Starte Training ...")
@@ -56,24 +60,10 @@ for epoch in range(EPOCHS):
 
         one_hot_labels = np.eye(10)[np_labels]
             
-        net.train_with_sgd(np_images.tolist(), one_hot_labels.tolist(), 0.01)
-        
-        # for idx in range(len(np_images)):
-        #     input_data = np_images[idx].tolist()
-        #     #print(input_data)
-        #     target_label = int(np_labels[idx])
-            
-        #     target_vector = [0.0] * 10
-        #     target_vector[target_label] = 1.0
-            
-        #     _, predicted_output = net.train_with_sgd(input_data, target_vector, LEARNING_RATE)
-            
+        avg_loss, _ = net.train_with_sgd(np_images.tolist(), one_hot_labels.tolist(), 0.01)
 
-        #     predicted_label = predicted_output.index(max(predicted_output))
-        #     if predicted_label == target_label:
-        #         train_correct += 1
-                
-        #     train_samples += 1
+        print(avg_loss)
+        
             
     # Testdaten auswerten
     test_correct = 0

@@ -53,16 +53,16 @@ class Neuron:
             )
 
         delta = err_right * derivative_activationFunc(self.last_total_value, self.alpha)
-        print("delta:", delta)
+        #print("delta:", delta)
 
         for i in range(len(self.weights)):
             self.weights[i] -= learning_rate * delta * self.last_input[i]
         
-        print("new weights of neuron:", self.weights)
+        #print("new weights of neuron:", self.weights)
 
 
         self.bias -= learning_rate * delta
-        print("new bias of neuron:", self.bias)
+        #print("new bias of neuron:", self.bias)
 
 
         return delta
@@ -192,7 +192,7 @@ class NeuralLayer:
             deltas.append(delta)
 
         errors_for_left = [0.0] * self.inputs_count
-        print("old_weights:", old_weights)
+        #print("old_weights:", old_weights)
 
         for j in range(self.inputs_count):
             error_sum = 0.0
@@ -203,7 +203,7 @@ class NeuralLayer:
             errors_for_left[j] = error_sum
 
         self.weights = [neuron.weights for neuron in self.Neurons]
-        print("new weights:", self.weights)
+        #print("new weights:", self.weights)
       
         return errors_for_left
 

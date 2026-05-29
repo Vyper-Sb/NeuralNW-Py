@@ -5,6 +5,7 @@ from FSNeuralNetwork.neural_layers import (
 )
 from typing import Optional
 from FSNeuralNetwork.activation_functions import activationType
+from FSNeuralNetwork.loss_functions import LossType
 import json
 
 
@@ -15,6 +16,7 @@ class NeuralNetwork:
         outputs: int,
         output_bias: float = -0.5,
         output_activation_type: activationType = activationType.SIGMOID,
+        loss_type: LossType = LossType.BINARY_CROSS_ENTROPY,
         output_weights: Optional[list[list[float]]] = None,
         output_alpha: float = 1,
     ) -> None:
@@ -29,6 +31,7 @@ class NeuralNetwork:
             weights=output_weights,
             alpha=output_alpha,
         )
+        self.lossType = loss_type
 
     def add_hidden_layer(
         self,
@@ -84,6 +87,7 @@ class NeuralNetwork:
             hidden_layer_configs.append(hiddenLayer.return_config())
 
         output_layer_config: dict = self.outputLayer.return_config()
+        output_layer_config["loss_type"] = self.lossType.value
 
         neural_network_config = {
             "input_layer": input_layer_config,
@@ -100,13 +104,14 @@ class NeuralNetwork:
             with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            out_cfg = data["output_layer"]
+            out_cfg:dict = data["output_layer"]
 
             network = cls(
                 inputs=data["input_layer"]["inputs"],
                 outputs=out_cfg["neurons"],
                 output_bias=-0.5,
                 output_activation_type=activationType(out_cfg["activation"]),
+                loss_type=LossType(out_cfg["loss_type"]),
                 output_alpha=out_cfg.get("alpha", 1),
             )
 
@@ -132,39 +137,65 @@ class NeuralNetwork:
         except Exception as e:
             raise Exception(f"Error: {e}")
 
+    def validate_loss_activation_combination(self) -> None:
+        if self.lossType == LossType.BINARY_CROSS_ENTROPY:
+            if self.outputLayer.activation != activationType.SIGMOID:
+                raise ValueError("Binary Cross Entropy needs Sigmoid in the ouput layer")
+
+        if self.lossType in [
+            LossType.CATEGORICAL_CROSS_ENTROPY,
+            LossType.SPARSE_CATEGORICAL_CROSS_ENTROPY,
+        ]:
+            if self.outputLayer.activation != activationType.SOFTMAX:
+                raise ValueError("Categorical Cross Entropy needs Softmax in the ouput layer")
+        
+        if self.outputLayer.activation == activationType.SOFTMAX:
+            if not(self.lossType in [
+            LossType.CATEGORICAL_CROSS_ENTROPY,
+            LossType.SPARSE_CATEGORICAL_CROSS_ENTROPY,
+            ]):
+                raise ValueError("Softmax only works with Categorical Cross Entropy or Sparse Categorical Cross Entropy")
+
     def train_with_sgd(
         self,
         batch: list[list[float]],
-        batch_target_output: list[list[float]],
+        batch_target_output: list[list[float] | int],
         learning_rate: float,
     ) -> tuple[float, list[list[float]]]:
-        # 1.Forward Pass
-        total_loss = 0.0
-        all_predicted_outputs: list[list[float]] = []
+        
+        self.validate_loss_activation_combination()
+        
         if len(batch) != len(batch_target_output):
             raise ValueError("Batch und Target-Batch müssen gleich lang sein.")
+        
+        loss_func = self.lossType.get_loss_function()
+        error_func = self.lossType.get_error_function()
+
+        total_loss = 0.0
+        all_predicted_outputs: list[list[float]] = []
 
         for training_input, target_output in zip(batch, batch_target_output):
             predicted_output = self.calculate_data(training_input)
-            print("ouput:", predicted_output)
+            #print("ouput:", predicted_output)
             all_predicted_outputs.append(predicted_output)
 
-            output_errors: list[float] = []
+            loss = loss_func(predicted_output, target_output)
+            output_errors:list[float] = error_func(predicted_output, target_output)
 
-            for j in range(len(predicted_output)):
-                error = predicted_output[j] - target_output[j]
-                total_loss += 0.5 * error**2
-                output_errors.append(error)
+            total_loss+=loss
             
-            print("ouput_errors:", output_errors)
+            #print("ouput_errors:", output_errors)
 
-            current_errors = self.outputLayer.backward(output_errors, learning_rate)
+            current_errors = self.outputLayer.backward(
+                errs_right=output_errors,
+                learning_rate=learning_rate,
+                loss_type=self.lossType,)
 
-            print("current errors:", current_errors)
+            #print("current errors:", current_errors)
             
             for hiddenLayer in reversed(self.hiddenLayers):
                 current_errors = hiddenLayer.backward(current_errors, learning_rate)
-                print("current errors:", current_errors)
+                #print("current errors:", current_errors)
 
         average_loss = total_loss / len(batch)
 
