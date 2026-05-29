@@ -1,5 +1,5 @@
 from FSNeuralNetwork.neural_network import NeuralNetwork
-
+import numpy as np
 
 def train_neuralnetwork(
     neuralNetwork: NeuralNetwork,
@@ -46,29 +46,27 @@ def train_nn_with_epochs(
 
 def train_NEpochs_alternately(
     neuralNetwork: NeuralNetwork,
-    epochs_of_epochs: list,
-    repetitions: int = 1000,
+    data: list,
+    epochs: int = 3,
     learning_rate: float = 0.01,
 ):
+    data_arr = np.array(data, dtype=object)
+    num_batches = len(data_arr)
 
-    for _ in range(repetitions):
-        err: list[float] = []
-        for epoch in epochs_of_epochs:
-            for train_set in epoch:
-                for i in range(len(train_set["X"])):
-                    err.append(
-                        neuralNetwork.train_with_sgd(
-                            train_set["X"][i],
-                            train_set["Y"][i],
-                            learning_rate=learning_rate,
-                        )
-                    )
+    for i in range(epochs):
+        print(f"--- Epoche {i + 1}/{epochs} ---")
+        for j, batch in enumerate(data_arr):
+            print("batch ", j+1 ,"/",num_batches)
+            input_batch = batch["X"]
+            target_batch = batch["Y"]
+            avg_loss, _ = neuralNetwork.train_with_sgd(
+                batch=input_batch,
+                batch_target_output=target_batch,
+                learning_rate=learning_rate,
+            )
+            print(avg_loss)
+        
+        np.random.shuffle(data_arr)
+                    
 
-    err_sum: float = 0
-
-    for error in err:
-        err_sum += error
-
-    print(f"\nNN after training: {neuralNetwork}")
-
-    return err_sum / len(err)
+    

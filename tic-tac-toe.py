@@ -2,547 +2,15 @@ from FSNeuralNetwork.neural_network import NeuralNetwork
 from FSNeuralNetwork.startweight_utils import generate_random_weights
 from FSNeuralNetwork.training_utils import train_NEpochs_alternately
 from FSNeuralNetwork.activation_functions import activationType
+from FSNeuralNetwork.loss_functions import LossType
 import random
-
-epochs_data = [
-    {
-        "X": [
-            [1, 1, 0, -1, 0, -1, 0, 0, 0],
-            [1, 0, -1, 1, 0, 0, 0, -1, 0],
-            [1, -1, 0, 0, 1, -1, 0, 0, 0],
-            [0, 0, 0, -1, -1, 0, 1, 1, 0],
-            [-1, -1, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, -1, 1, 0, -1, 1, 0, 0],
-            [0, 0, -1, 0, -1, 0, 0, 0, 1],
-            [-1, 0, 1, 0, -1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [
-                -1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-            ],
-            [0, 0, 0, 0, 1, 0, 0, 0, -1],
-            [
-                0,
-                -1,
-                0,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-            ],
-        ],
-        "Y": [
-            [0, 0, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0],
-        ],
-    },
-    # Fokus: Vertikale Gewinne/Blocks + neue Eröffnungen (Reihenfolge gemischt)
-    {
-        "X": [
-            [0, 0, -1, 0, 0, -1, 0, 0, 0],  # Gegner-Spalte rechts blockieren -> Index 8
-            [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                -1,
-                0,
-            ],
-            [1, 0, 0, 1, -1, 0, 0, 0, -1],  # Spalte links vollenden -> Index 6
-            [0, -1, 0, 0, -1, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 1, 0, 0, 0],  # Spalte rechts vollenden -> Index 8
-            [
-                -1,
-                0,
-                0,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-            ],
-            [0, 1, 1, -1, 0, -1, 0, 0, 0],
-            [
-                1,
-                0,
-                -1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-            ],
-        ],
-        "Y": [
-            [0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 1, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],
-        ],
-    },
-    # Fokus: Mittlere horizontale Reihen + Diagonale von rechts oben nach links unten
-    {
-        "X": [
-            [0, 0, 1, 0, 1, 0, 0, -1, -1],  # Diagonale vollenden -> Index 6
-            [0, 0, 0, 1, 1, 0, -1, 0, -1],  # Reihe Mitte vollenden -> Index 5
-            [0, 0, -1, 0, -1, 0, 0, 0, 0],  # Diagonale blockieren -> Index 6
-            [
-                -1,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-            ],  # Gegner blockierte Ecke -> Mitte besetzen -> Index 4
-            [0, 0, 0, -1, -1, 0, 0, 1, 1],  # Reihe Mitte blockieren -> Index 5
-            [0, 0, 0, 0, 1, -1, 0, 0, 0],  # Zug erzwingen -> Ecke oben links -> Index 0
-        ],
-        "Y": [
-            [0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0],
-        ],
-    },
-    # Fokus: Fortgeschrittenes Spiel (Gegner hat fast zwei Optionen, KI muss klug setzen)
-    {
-        "X": [
-            [1, 0, -1, -1, 1, 0, 0, 0, 0],  # Diagonale vollenden -> Index 8
-            [-1, 1, 0, 0, -1, 0, 1, 0, 0],  # Gegner-Diagonale blockieren -> Index 8
-            [1, -1, 1, 0, 0, 0, -1, 0, 0],  # Verteidigung -> Mitte besetzen -> Index 4
-            [-1, 0, 1, 1, -1, 0, 0, 0, 0],  # Reihe links blockieren -> Index 6
-            [0, 0, 1, -1, -1, 0, 0, 0, 1],  # Reihe Mitte blockieren -> Index 5
-        ],
-        "Y": [
-            [0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0],
-        ],
-    },
-    # Fokus: Finale Züge vor dem Unentschieden / Letzte Lücken füllen
-    {
-        "X": [
-            [
-                1,
-                -1,
-                1,
-                -1,
-                1,
-                -1,
-                0,
-                1,
-                -1,
-            ],  # Letztes freies Feld füllen für Gewinn -> Index 6
-            [
-                -1,
-                1,
-                -1,
-                1,
-                0,
-                1,
-                1,
-                -1,
-                -1,
-            ],  # Letztes freies Feld blockieren -> Index 4
-            [1, -1, 0, -1, 1, 1, -1, 1, -1],  # Reihe oben vollenden -> Index 2
-            [-1, 1, -1, 0, 1, -1, 1, -1, 1],  # Einziger valider Zug -> Index 3
-        ],
-        "Y": [
-            [0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0],
-        ],
-    },
-]
-
-epochs_data_2 = [
-    # EPOCHE 1 - Fokus: Eigene Chancen nutzen auf den Achsen (1, 3, 5, 7)
-    {
-        "X": [
-            [
-                0,
-                1,
-                0,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-            ],  # Eigene Spalte Mitte vollenden (über 1 und 4) -> Index 7
-            [
-                0,
-                0,
-                0,
-                1,
-                1,
-                0,
-                0,
-                0,
-                0,
-            ],  # Eigene Reihe Mitte vollenden (über 3 und 4) -> Index 5
-            [
-                0,
-                0,
-                0,
-                0,
-                1,
-                1,
-                0,
-                0,
-                0,
-            ],  # Eigene Reihe Mitte vollenden (über 4 und 5) -> Index 3
-            [
-                0,
-                0,
-                0,
-                0,
-                1,
-                0,
-                0,
-                1,
-                0,
-            ],  # Eigene Spalte Mitte vollenden (über 4 und 7) -> Index 1
-            [
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                1,
-                0,
-            ],  # Vertikale Lücke in der Mitte füllen (1 und 7 besetzt) -> Index 4
-            [
-                0,
-                0,
-                0,
-                1,
-                0,
-                1,
-                0,
-                0,
-                0,
-            ],  # Horizontale Lücke in der Mitte füllen (3 und 5 besetzt) -> Index 4
-        ],
-        "Y": [
-            [0, 0, 0, 0, 0, 0, 0, 1, 0],  # Setze auf Index 7
-            [0, 0, 0, 0, 0, 1, 0, 0, 0],  # Setze auf Index 5
-            [0, 0, 0, 1, 0, 0, 0, 0, 0],  # Setze auf Index 3
-            [0, 1, 0, 0, 0, 0, 0, 0, 0],  # Setze auf Index 1
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],  # Setze auf Index 4
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],  # Setze auf Index 4
-        ],
-    },
-    # EPOCHE 2 - Fokus: Gegner blockieren auf den Achsen (1, 3, 5, 7)
-    {
-        "X": [
-            [
-                0,
-                -1,
-                0,
-                0,
-                -1,
-                0,
-                0,
-                0,
-                0,
-            ],  # Gegner Spalte Mitte blockieren (über 1 und 4) -> Index 7
-            [
-                0,
-                0,
-                0,
-                -1,
-                -1,
-                0,
-                0,
-                0,
-                0,
-            ],  # Gegner Reihe Mitte blockieren (über 3 und 4) -> Index 5
-            [
-                0,
-                0,
-                0,
-                0,
-                -1,
-                -1,
-                0,
-                0,
-                0,
-            ],  # Gegner Reihe Mitte blockieren (über 4 und 5) -> Index 3
-            [
-                0,
-                0,
-                0,
-                0,
-                -1,
-                0,
-                0,
-                -1,
-                0,
-            ],  # Gegner Spalte Mitte blockieren (über 4 und 7) -> Index 1
-            [
-                0,
-                -1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                -1,
-                0,
-            ],  # Gegner-Lücke in vertikaler Mitte blockieren -> Index 4
-            [
-                0,
-                0,
-                0,
-                -1,
-                0,
-                -1,
-                0,
-                0,
-                0,
-            ],  # Gegner-Lücke in horizontaler Mitte blockieren -> Index 4
-        ],
-        "Y": [
-            [0, 0, 0, 0, 0, 0, 0, 1, 0],  # Setze auf Index 7
-            [0, 0, 0, 0, 0, 1, 0, 0, 0],  # Setze auf Index 5
-            [0, 0, 0, 1, 0, 0, 0, 0, 0],  # Setze auf Index 3
-            [0, 1, 0, 0, 0, 0, 0, 0, 0],  # Setze auf Index 1
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],  # Setze auf Index 4
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],  # Setze auf Index 4
-        ],
-    },
-    # EPOCHE 3 - Fokus: Gemischte Szenarien (Angriff & Verteidigung kombiniert über Kanten)
-    {
-        "X": [
-            [
-                -1,
-                1,
-                0,
-                0,
-                1,
-                0,
-                0,
-                0,
-                -1,
-            ],  # Eigene Spalte Mitte vollenden (Gegner blockiert Ecken) -> Index 7
-            [0, 0, -1, 1, 1, 0, -1, 0, 0],  # Eigene Reihe Mitte vollenden -> Index 5
-            [
-                0,
-                -1,
-                0,
-                0,
-                -1,
-                0,
-                1,
-                0,
-                1,
-            ],  # Gegner-Spalte Mitte blockieren (KI hält untere Ecken) -> Index 7
-            [1, 0, 0, -1, -1, 0, 0, 0, 1],  # Gegner-Reihe Mitte blockieren -> Index 5
-        ],
-        "Y": [
-            [0, 0, 0, 0, 0, 0, 0, 1, 0],  # Setze auf Index 7
-            [0, 0, 0, 0, 0, 1, 0, 0, 0],  # Setze auf Index 5
-            [0, 0, 0, 0, 0, 0, 0, 1, 0],  # Setze auf Index 7
-            [0, 0, 0, 0, 0, 1, 0, 0, 0],  # Setze auf Index 5
-        ],
-    },
-    # EPOCHE 4 - Fokus: Komplexe Kanten-Strukturen mit Zug-Erzwingung
-    {
-        "X": [
-            [
-                0,
-                1,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-            ],  # Gabelung vorbereiten über Kanten (1 und 3 besetzt) -> Index 4
-            [
-                0,
-                0,
-                0,
-                0,
-                0,
-                1,
-                0,
-                1,
-                0,
-            ],  # Gabelung vorbereiten über Kanten (5 und 7 besetzt) -> Index 4
-            [
-                0,
-                -1,
-                0,
-                -1,
-                1,
-                0,
-                0,
-                0,
-                0,
-            ],  # Gegner-Kanten-Angriff abwehren (Mitte halten) -> Index 0
-            [
-                0,
-                0,
-                0,
-                0,
-                1,
-                -1,
-                0,
-                -1,
-                0,
-            ],  # Gegner-Kanten-Angriff abwehren (Mitte halten) -> Index 8
-        ],
-        "Y": [
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],  # Setze auf Index 4
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],  # Setze auf Index 4
-            [1, 0, 0, 0, 0, 0, 0, 0, 0],  # Setze auf Index 0 (Ecke blocken)
-            [0, 0, 0, 0, 0, 0, 0, 0, 1],  # Setze auf Index 8 (Ecke blocken)
-        ],
-    },
-    # EPOCHE 5 - Fokus: Ausgeglichene Restfelder auf den Achsen füllen
-    {
-        "X": [
-            [
-                -1,
-                1,
-                1,
-                1,
-                -1,
-                -1,
-                -1,
-                0,
-                1,
-            ],  # Letzte logische Kante füllen vor Unentschieden -> Index 7
-            [
-                1,
-                -1,
-                -1,
-                0,
-                1,
-                1,
-                1,
-                1,
-                -1,
-            ],  # Letzte logische Kante füllen vor Unentschieden -> Index 3
-            [
-                -1,
-                0,
-                1,
-                1,
-                1,
-                -1,
-                -1,
-                1,
-                -1,
-            ],  # Einzige Kante füllen, um Gegner-Sieg zu verhindern -> Index 1
-        ],
-        "Y": [
-            [0, 0, 0, 0, 0, 0, 0, 1, 0],  # Setze auf Index 7
-            [0, 0, 0, 1, 0, 0, 0, 0, 0],  # Setze auf Index 3
-            [0, 1, 0, 0, 0, 0, 0, 0, 0],  # Setze auf Index 1
-        ],
-    },
-]
-
-epochs_data_3 = [
-    {
-        "X": [
-            [0, -1, 0, 0, -1, 0, 0, 0, 1],
-            [-1, -1, 0, 0, 1, 0, 0, 0, 1],
-            [-1, 0, 0, 0, -1, 0, 0, 0, 1],
-            [-1, 0, -1, 0, -1, 1, 1, -1, 1],
-            [-1, 0, -1, 0, 1, 0, 0, 0, 1],
-            [-1, 0, -1, -1, 1, 1, 1, 0, -1],
-            [0, 0, 0, 0, 1, 0, 0, -1, -1],
-            [-1, 0, 0, -1, 1, 1, 1, -1, -1],
-            [0, 0, 0, -1, 1, 0, -1, 0, 1],
-            [-1, 0, -1, 0, 1, 0, 0, 0, 1],
-        ],
-        "Y": [
-            [0, 0, 0, 0, 0, 0, 0, 1, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0],
-            [0, 1, 0, 0, 0, 0, 0, 0, 0],
-            [0, 1, 0, 0, 0, 0, 0, 0, 0],
-            [0, 1, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 1, 0, 0, 0, 0, 0, 0, 0],
-        ],
-    },
-    {
-        "X": [
-            [-1, 0, -1, -1, 1, 1, 1, 0, -1],
-            [-1, 0, 0, -1, 1, 0, 0, 0, 0],
-            [0, -1, -1, 0, 1, 0, 0, 0, 0],
-            [-1, 0, -1, 0, 1, -1, 0, 0, 1],
-            [0, 0, 0, 0, 1, -1, 0, 0, -1],
-            [0, 0, 0, 0, 1, 0, 0, -1, -1],
-            [-1, 0, 0, 0, 1, 0, -1, -1, 1],
-            [-1, 0, 0, 0, 1, 0, 0, 0, 0],
-            [-1, 0, 0, 0, 1, 0, -1, 0, 1],
-        ],
-        "Y": [
-            [0, 1, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 1, 0, 0, 0, 0, 0, 0, 0],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 1, 0],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0],
-        ],
-    },
-]
+import json
 
 
 def initialize():
     inputs_count = 9
-    neurons_hiddenlayer1 = 64
-    neurons_hiddenlayer2 = 32
+    neurons_hiddenlayer1 = 24
+    neurons_hiddenlayer2 = 12
     outputs_count = 9
 
     startweigts_h1 = generate_random_weights(neurons_hiddenlayer1, inputs_count)
@@ -552,19 +20,21 @@ def initialize():
     neuralNetwork = NeuralNetwork(
         inputs_count,
         outputs_count,
+        output_bias=0,
         output_activation_type=activationType.SOFTMAX,
+        loss_type=LossType.CATEGORICAL_CROSS_ENTROPY,
     )
 
     neuralNetwork.add_hidden_layer(
         neurons_hiddenlayer1,
         weights=startweigts_h1,
-        bias=-0.1,
+        bias=0,
         activation_type=activationType.LEAKY_RELU,
     )
     neuralNetwork.add_hidden_layer(
         neurons_hiddenlayer2,
         weights=startweigts_h2,
-        bias=-0.1,
+        bias=0,
         activation_type=activationType.LEAKY_RELU,
     )
 
@@ -572,25 +42,23 @@ def initialize():
 
     print(neuralNetwork)
 
-    neuralNetwork.save_neural_network()
+    neuralNetwork.save_neural_network("tictactoesetup24x12.json")
 
     return neuralNetwork
 
 
 def train():
-    neuralNetwork = NeuralNetwork.load_neural_network()
+    neuralNetwork = NeuralNetwork.load_neural_network("tictactoesetup24x12.json")
+    try:
+        with open("tictactoe_training_data.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-    err = train_NEpochs_alternately(
-        neuralNetwork,
-        epochs_of_epochs=[epochs_data, epochs_data_2, epochs_data_3],
-        repetitions=1000,
-        learning_rate=0.01,
-    )
-    print(err)
+            train_NEpochs_alternately(neuralNetwork=neuralNetwork, data=data, epochs=150)
 
-    neuralNetwork.save_neural_network()
-
-
+            neuralNetwork.save_neural_network("tictactoetrained24x12.json")
+    except FileNotFoundError:
+        raise FileNotFoundError("Json datei wurde nicht gefunden")
+    
 def print_board(board):
     """Gibt das Spielfeld formatiert im Terminal aus."""
     symbols = {0: " ", 1: "X", -1: "O"}  # 1 = KI (X), -1 = Mensch (O)
@@ -655,12 +123,36 @@ def ai_move(board, ai_model: NeuralNetwork):
     sorted_indices = sorted(
         range(9), key=lambda k: output_probabilities[k], reverse=True
     )
+    print(sorted_indices)
+    sorted_indices_with_k = []
+    for i in range(len(sorted_indices)):
+        sorted_indices_with_k.append([sorted_indices[i], output_probabilities[sorted_indices[i]]])
+    
+    print(sorted_indices_with_k)
 
-    for index in sorted_indices:
+    valid_sorted_indices_with_k = []
+
+    for index, k in sorted_indices_with_k:
         if board[index] == 0:  # Gültig, da das Feld frei ist
-            return index
+            valid_sorted_indices_with_k.append([index, k])
+    
+    print(valid_sorted_indices_with_k)
 
-    return -1
+    if not(valid_sorted_indices_with_k):
+        return -1
+
+    best_idx, best_k = valid_sorted_indices_with_k[0]
+    second_idx, second_k = valid_sorted_indices_with_k[1]
+
+    diff = best_k-second_k
+    if diff > 0.4:
+        print("KI ist sich zeimlich sicher")
+        return best_idx
+    else:
+        print("KI ist sich unsicher")
+        return random.choices([best_idx, second_idx], weights=[best_k, second_k])
+        
+    
 
 
 def play_game(ai_model):
@@ -721,9 +213,11 @@ def play_game(ai_model):
 
 
 def main():
-    ai_model = NeuralNetwork.load_neural_network()
+    ai_model = NeuralNetwork.load_neural_network("tictactoetrained24x12.json")
 
     play_game(ai_model)
+    # initialize()
+    # train()
 
 
 # Spiel starten
